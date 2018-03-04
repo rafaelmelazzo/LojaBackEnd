@@ -68,12 +68,13 @@ namespace LojaApi.Controllers
                 }
             }
 
-            return StatusCode(HttpStatusCode.NoContent);
+            //return StatusCode(HttpStatusCode.NoContent);
+            return Ok(produto);
         }
 
         // POST: api/Produtos
         [ResponseType(typeof(Produto))]
-        public async Task<IHttpActionResult> PostProduto(Produto produto)
+        public async Task<IHttpActionResult> PostProduto([FromBody]Produto produto)
         {
             if (!ModelState.IsValid)
             {

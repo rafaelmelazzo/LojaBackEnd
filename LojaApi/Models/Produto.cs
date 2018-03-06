@@ -7,9 +7,9 @@ namespace LojaApi.Models
 {
     public class Produto
     {
-        public int Id { get; set; }
-        public string Nome { get; set; }
-        public string Categoria { get; set; }
-        public decimal Preco { get; set; }   
+        public int id { get; set; }
+        public string nome { get; set; }
+        public string categoria { get; set; }
+        public decimal preco { get; set; }   
     }
 }

@@ -51,7 +51,7 @@ GO
 USE [loja]
 GO
 
-/****** Object:  StoredProcedure [dbo].[usp_ins_alt_produto]    Script Date: 06/03/2018 23:27:13 ******/
+/****** Object:  StoredProcedure [dbo].[usp_ins_alt_produto]    Script Date: 06/03/2018 23:40:57 ******/
 SET ANSI_NULLS ON
 GO
 
@@ -80,9 +80,15 @@ AS
 
 	if (select LEN(@categoria)) > 10 
 		THROW 50093, 'Limite de caracteres excedido para o campo Categoria.', 1;
+		
+	DECLARE @count INT;
 
 	if @id = 0
-		begin
+		begin			
+			select @count = count(id) from produtos where nome = @nome;
+			if @count > 0
+				THROW 50094, 'Produto já cadastrado!', 1;
+
 			INSERT INTO produtos
 				(nome, categoria, preco)
 			VALUES        
@@ -90,6 +96,10 @@ AS
 		end;
 	else
 		begin
+			select @count = count(id) from produtos where nome = @nome and id <> @id;
+			if @count > 0
+				THROW 50094, 'Produto já cadastrado!', 1;
+
 			UPDATE 
 				produtos
 			SET
@@ -99,6 +109,8 @@ AS
 			WHERE (id = @id);
 		end;
 GO
+
+
 
 
 

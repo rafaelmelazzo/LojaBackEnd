@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
@@ -12,12 +13,18 @@ using Newtonsoft.Json;
 
 namespace LojaApi.Controllers
 {
+    /// <summary>
+    /// ProdutosController controller de gerenciamento de produtos
+    /// </summary>
     public class ProdutosController : ApiController
     {
 
+        /// <summary>
+        /// Retorna todos os produtos
+        /// </summary>
         public IHttpActionResult GetAllProducts()
         {
-            object response = this.execFindSqlComand("select * from produtos FOR JSON AUTO");
+            object response = this.ExecFindCommand(0);
 
             if (response == null)
             {
@@ -27,9 +34,12 @@ namespace LojaApi.Controllers
             return Ok(response);
         }
 
+        /// <summary>
+        /// Retorna produto pelo Id
+        /// </summary>
         public IHttpActionResult GetProduct(int id)
         {               
-            object response = this.execFindSqlComand("select * from produtos where id = " + id + " FOR JSON AUTO");
+            object response = this.ExecFindCommand(id);
 
             if (response == null)
             {
@@ -39,28 +49,40 @@ namespace LojaApi.Controllers
             return Ok(response);
         }
 
+        /// <summary>
+        /// Cria produto
+        /// </summary>
         public IHttpActionResult PostProduct(LojaApi.Models.Produto produto)
         {
-            this.execCreateUpdateProcedureComand(produto);
+            this.ExecCreateUpdateProcedureCommand(produto);
 
             return Ok(produto);
         }
 
+        /// <summary>
+        /// Altera produto
+        /// </summary>
         public IHttpActionResult PutProduct(LojaApi.Models.Produto produto)
         {
-            this.execCreateUpdateProcedureComand(produto);
+            this.ExecCreateUpdateProcedureCommand(produto);
 
             return Ok(produto);
         }
 
+        /// <summary>
+        /// Exclui produto
+        /// </summary>
         public IHttpActionResult DeleteProduct(int id)
         {
-            this.execDeleteProcedureComand(id);
+            this.ExecDeleteProcedureCommand(id);
 
             return Ok(id);
         }
 
-        private Object execFindSqlComand(string sql)
+        /// <summary>
+        /// Executa busca no banco de dados via SQL
+        /// </summary>
+        private Object ExecFindSqlCommand(string sql)
         {
             string strcon = System.Configuration.ConfigurationManager.ConnectionStrings["connectionString"].ConnectionString;
             SqlConnection DbConnection = new SqlConnection(strcon);        
@@ -68,21 +90,55 @@ namespace LojaApi.Controllers
             SqlCommand command = new SqlCommand(sql, DbConnection);
             SqlDataReader reader = command.ExecuteReader();
 
-            string retorno = "";
+            ArrayList objs = new ArrayList();
+
             while (reader.Read())
             {
-                retorno = retorno + String.Format("{0}", reader[0]);
+                objs.Add(new
+                {
+                    id = reader["id"],
+                    categoria = reader["categoria"],
+                    nome = reader["nome"],
+                    preco = reader["preco"]
+                });
             }
 
-            JavaScriptSerializer j = new System.Web.Script.Serialization.JavaScriptSerializer();
-            object response = j.Deserialize(retorno, typeof(object));
-
-            DbConnection.Close();
-
-            return response;
+            return objs;
         }
 
-        private void execCreateUpdateProcedureComand(LojaApi.Models.Produto produto)
+        /// <summary>
+        /// Executa busca no banco de dados via STORED PROCEDURE
+        /// </summary>
+        private Object ExecFindCommand(int id)
+        {
+            string strcon = System.Configuration.ConfigurationManager.ConnectionStrings["connectionString"].ConnectionString;
+            SqlConnection DbConnection = new SqlConnection(strcon);
+            DbConnection.Open();
+            SqlCommand command = new SqlCommand("[dbo].[usp_find_produtos]", DbConnection);
+            command.CommandType = CommandType.StoredProcedure;
+            command.Parameters.Add("@id", SqlDbType.Int, 10).Value = id;
+            SqlDataReader reader = command.ExecuteReader();
+
+            ArrayList objs = new ArrayList();
+
+            while (reader.Read())
+            {
+                objs.Add(new
+                {
+                    id = reader["id"],
+                    categoria = reader["categoria"],
+                    nome = reader["nome"],
+                    preco = reader["preco"]
+                });
+            }
+
+            return objs;
+        }
+
+        /// <summary>
+        /// Realiza persistência no banco de dados (insert/update) via STORED PROCEDURE
+        /// </summary>
+        private void ExecCreateUpdateProcedureCommand(LojaApi.Models.Produto produto)
         {
             string strcon = System.Configuration.ConfigurationManager.ConnectionStrings["connectionString"].ConnectionString;
             SqlConnection DbConnection = new SqlConnection(strcon);
@@ -99,7 +155,10 @@ namespace LojaApi.Controllers
             command.ExecuteNonQuery();
         }
 
-        private void execDeleteProcedureComand(int id)
+        /// <summary>
+        /// Realiza exclusão no banco de dados (delete) via STORED PROCEDURE
+        /// </summary>
+        private void ExecDeleteProcedureCommand(int id)
         {
             string strcon = System.Configuration.ConfigurationManager.ConnectionStrings["connectionString"].ConnectionString;
             SqlConnection DbConnection = new SqlConnection(strcon);
